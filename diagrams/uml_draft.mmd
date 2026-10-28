@@ -1,22 +1,38 @@
 classDiagram
     class Owner {
-        +str owner_id
-        +str name
-        +str email
-        +list~Pet~ pets
-        +add_pet(pet: Pet) None
-        +remove_pet(pet_id: str) None
-        +get_pets() list~Pet~
+        +String owner_id
+        +String name
+        +String email
+        +List~Pet~ pets
+        +add_pet(pet: Pet)
+        +remove_pet(pet_id: String)
+        +get_pets() List~Pet~
+        +get_all_tasks() List~Task~
     }
 
     class Pet {
-        +str pet_id
-        +str name
-        +str species
-        +float age
-        +str special_instructions
-        +update_profile(name: str, species: str, age: float, special_instructions: str) None
-        +get_details() dict
+        +String pet_id
+        +String name
+        +String species
+        +Float age
+        +String special_instructions
+        +List~Task~ tasks
+        +add_task(task: Task)
+        +update_profile(...)
+        +get_details() Dict
+    }
+
+    class Task {
+        +String task_id
+        +String pet_id
+        +String title
+        +Int duration
+        +Priority priority
+        +String scheduled_time
+        +Boolean is_completed
+        +String recurrence
+        +mark_complete()
+        +update_task_details(...)
     }
 
     class Priority {
@@ -27,29 +43,21 @@ classDiagram
         CRITICAL = 4
     }
 
-    class Task {
-        +str task_id
-        +str pet_id
-        +str title
-        +int duration
-        +Priority priority
-        +str scheduled_time
-        +bool is_completed
-        +bool is_recurring
-        +mark_complete() None
-        +update_task_details(duration: int, priority: Priority) None
+    class Plan {
+        +List~Task~ scheduled
+        +List~Task~ skipped
+        +Int remaining_minutes
+        +Dict skip_reasons
     }
 
     class Scheduler {
-        +list~Task~ tasks
-        +add_task(task: Task) None
-        +generate_daily_plan(owner: Owner, time_limit_minutes: int) dict
-        +sort_tasks_by_priority() list~Task~
-        +detect_conflicts() list~tuple~
+        +generate_daily_plan(owner: Owner, time_limit_minutes: Int) Plan
+        +sort_tasks_by_priority(tasks: List~Task~) List~Task~
+        +detect_conflicts(tasks: List~Task~) List~Tuple~
     }
 
-    Owner "1" *-- "0..*" Pet : owns
-    Pet "1" *-- "0..*" Task : assigned to
-    Task "1" --> "1" Priority : has
-    Scheduler "1" o-- "0..*" Task : manages
-    Scheduler ..> Owner : plans for
+    Owner "1" *-- "many" Pet : owns
+    Pet "1" *-- "many" Task : has
+    Task --> Priority : uses
+    Scheduler ..> Plan : returns
+    Scheduler ..> Owner : processes
