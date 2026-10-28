@@ -1,7 +1,8 @@
 """Core PawPal+ domain and scheduling logic."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import IntEnum
+from typing import Any
 
 
 class Priority(IntEnum):
@@ -9,50 +10,6 @@ class Priority(IntEnum):
     MEDIUM = 2
     HIGH = 3
     CRITICAL = 4
-
-
-class Owner:
-    def __init__(self, owner_id: str, name: str, email: str, pets: list["Pet"] | None = None) -> None:
-        self.owner_id = owner_id
-        self.name = name
-        self.email = email
-        self.pets = pets or []
-
-    def add_pet(self, pet: "Pet") -> None:
-        if pet not in self.pets:
-            self.pets.append(pet)
-
-    def remove_pet(self, pet_id: str) -> None:
-        self.pets = [pet for pet in self.pets if pet.pet_id != pet_id]
-
-    def get_pets(self) -> list["Pet"]:
-        return self.pets
-
-
-@dataclass
-class Pet:
-    pet_id: str
-    name: str
-    species: str
-    age: float
-    special_instructions: str = ""
-
-    def update_profile(
-        self, name: str, species: str, age: float, special_instructions: str
-    ) -> None:
-        self.name = name
-        self.species = species
-        self.age = age
-        self.special_instructions = special_instructions
-
-    def get_details(self) -> dict:
-        return {
-            "pet_id": self.pet_id,
-            "name": self.name,
-            "species": self.species,
-            "age": self.age,
-            "special_instructions": self.special_instructions,
-        }
 
 
 @dataclass
@@ -64,7 +21,7 @@ class Task:
     priority: Priority = Priority.MEDIUM
     scheduled_time: str = ""
     is_completed: bool = False
-    is_recurring: bool = False
+    recurrence: str = "none"
 
     def mark_complete(self) -> None:
         self.is_completed = True
@@ -74,71 +31,69 @@ class Task:
         self.priority = priority
 
 
-class Scheduler:
-    def __init__(self, tasks: list[Task] | None = None) -> None:
-        self.tasks = tasks or []
+@dataclass
+class Pet:
+    pet_id: str
+    name: str
+    species: str
+    age: float
+    special_instructions: str = ""
+    tasks: list[Task] = field(default_factory=list)
 
     def add_task(self, task: Task) -> None:
-        if task not in self.tasks:
+        if not any(t.task_id == task.task_id for t in self.tasks):
             self.tasks.append(task)
 
-    def generate_daily_plan(
-        self, owner: Owner, time_limit_minutes: int
-    ) -> dict:
-        owned_pet_ids = {pet.pet_id for pet in owner.get_pets()}
-        eligible_tasks = [
-            task for task in self.tasks
-            if task.pet_id in owned_pet_ids and not task.is_completed
-        ]
-        sorted_tasks = sorted(
-            eligible_tasks,
-            key=lambda task: (-task.priority, _time_to_minutes(task.scheduled_time)),
-        )
+    def update_profile(
+        self, name: str, species: str, age: float, special_instructions: str
+    ) -> None:
+        self.name = name
+        self.species = species
+        self.age = age
+        self.special_instructions = special_instructions
 
-        scheduled = []
-        skipped = []
-        remaining_minutes = time_limit_minutes
-        for task in sorted_tasks:
-            if task.duration <= remaining_minutes:
-                scheduled.append(task)
-                remaining_minutes -= task.duration
-            else:
-                skipped.append(task)
-
+    def get_details(self) -> dict[str, Any]:
         return {
-            "scheduled_tasks": scheduled,
-            "skipped_tasks": skipped,
-            "remaining_minutes": remaining_minutes,
-            "scheduled": scheduled,
-            "skipped": skipped,
+            "pet_id": self.pet_id,
+            "name": self.name,
+            "species": self.species,
+            "age": self.age,
+            "special_instructions": self.special_instructions,
         }
 
-    def sort_tasks_by_priority(self) -> list[Task]:
-        return sorted(
-            self.tasks,
-            key=lambda task: (-task.priority, _time_to_minutes(task.scheduled_time)),
-        )
 
-    def detect_conflicts(self) -> list[tuple[Task, Task]]:
-        conflicts = []
-        for index, first in enumerate(self.tasks):
-            if not first.scheduled_time:
-                continue
-            first_start = _time_to_minutes(first.scheduled_time)
-            first_end = first_start + first.duration
-            for second in self.tasks[index + 1:]:
-                if not second.scheduled_time:
-                    continue
-                second_start = _time_to_minutes(second.scheduled_time)
-                second_end = second_start + second.duration
-                if first_start < 24 * 60 and second_start < 24 * 60:
-                    if first_start < second_end and second_start < first_end:
-                        conflicts.append((first, second))
-        return conflicts
+class Owner:
+    def __init__(self, owner_id: str, name: str, email: str, pets: list[Pet] | None = None) -> None:
+        self.owner_id = owner_id
+        self.name = name
+        self.email = email
+        self.pets = pets or []
 
+    def add_pet(self, pet: Pet) -> None:
+        if not any(p.pet_id == pet.pet_id for p in self.pets):
+            self.pets.append(pet)
+
+    def remove_pet(self, pet_id: str) -> None:
+        self.pets = [pet for pet in self.pets if pet.pet_id != pet_id]
+
+    def get_pets(self) -> list[Pet]:
+        return self.pets
+
+    def get_all_tasks(self) -> list[Task]:
+        all_tasks = []
+        for pet in self.pets:
+            all_tasks.extend(pet.tasks)
+        return all_tasks
+
+
+class Plan:
+    def __init__(self) -> None:
+        self.scheduled: list[Task] = []
+        self.skipped: list[Task] = []
+        self.remaining_minutes: int = 0
+        self.skip_reasons: dict[str, str] = {}
 
 def _time_to_minutes(time_value: str) -> int:
-    """Convert common 12-hour or 24-hour time strings to minutes after midnight."""
     value = time_value.strip().upper()
     if not value:
         return 24 * 60
@@ -157,3 +112,57 @@ def _time_to_minutes(time_value: str) -> int:
         return hour * 60 + minute
     except (TypeError, ValueError):
         return 24 * 60
+
+
+class Scheduler:
+    def generate_daily_plan(
+        self, owner: Owner, time_limit_minutes: int
+    ) -> Plan:
+        plan = Plan()
+        plan.remaining_minutes = time_limit_minutes
+
+        all_tasks = owner.get_all_tasks()
+        eligible_tasks = [task for task in all_tasks if not task.is_completed]
+
+        sorted_tasks = self.sort_tasks_by_priority(eligible_tasks)
+
+        for task in sorted_tasks:
+            if task.duration <= plan.remaining_minutes:
+                plan.scheduled.append(task)
+                plan.remaining_minutes -= task.duration
+            else:
+                plan.skipped.append(task)
+                plan.skip_reasons[task.task_id] = "Insufficient time budget remaining."
+
+        return plan
+
+    def sort_tasks_by_priority(self, tasks: list[Task]) -> list[Task]:
+        return sorted(
+            tasks,
+            key=lambda task: (-task.priority, _time_to_minutes(task.scheduled_time)),
+        )
+
+    def detect_conflicts(self, tasks: list[Task]) -> list[tuple[Task, Task]]:
+        conflicts = []
+        for index, first in enumerate(tasks):
+            if not first.scheduled_time.strip():
+                continue
+            first_start = _time_to_minutes(first.scheduled_time)
+            if first_start >= 24 * 60:
+                continue
+            first_end = first_start + first.duration
+
+            for second in tasks[index + 1:]:
+                # Only check for conflicts if tasks belong to the same pet
+                if first.pet_id != second.pet_id:
+                    continue
+                if not second.scheduled_time.strip():
+                    continue
+                second_start = _time_to_minutes(second.scheduled_time)
+                if second_start >= 24 * 60:
+                    continue
+                second_end = second_start + second.duration
+                if first_start < second_end and second_start < first_end:
+                    conflicts.append((first, second))
+
+        return conflicts

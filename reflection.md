@@ -23,6 +23,13 @@ Users can view an organized daily plan or dashboard of scheduled care tasks, all
 
 **a. Initial design**
 
+For the initial architecture of PawPal+, I designed four core classes to separate user domain models, pet metadata, care activities, and scheduling logic:
+
+* **`Owner`**: Represents the user profile. Its primary responsibility is managing top-level account metadata (`owner_id`, `name`, `email`) and maintaining the collection of registered pets through methods like `add_pet()`, `remove_pet()`, and `get_pets()`.
+* **`Pet`**: Encapsulates individual pet profile data, storing information such as `pet_id`, `name`, `species`, `age`, and `special_instructions`. It uses `@dataclass` for clean attribute initialization and provides behavioral methods like `update_profile()` and `get_details()` to manage and export profile metadata.
+* **`Task`**: Implemented as a `@dataclass`, this class represents discrete care activities (e.g., feedings, walks, medications). It holds task attributes including `task_id`, `pet_id`, `title`, `duration`, `scheduled_time`, completion status, recurrence flags, and a strongly-typed `Priority` (`IntEnum`). Its methods (`mark_complete()` and `update_task_details()`) manage task state updates.
+* **`Scheduler`**: Serves as the central backend engine decoupled from domain models. It stores the aggregate pool of tasks (`tasks`) and executes core operational logic, including `add_task()`, `sort_tasks_by_priority()`, `detect_conflicts()`, and `generate_daily_plan()` to calculate daily agendas based on user time constraints.
+
 - Briefly describe your initial UML design.
 - What classes did you include, and what responsibilities did you assign to each?
 
