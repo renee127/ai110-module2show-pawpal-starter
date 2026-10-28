@@ -1,0 +1,55 @@
+classDiagram
+    class Owner {
+        +str owner_id
+        +str name
+        +str email
+        +list~Pet~ pets
+        +add_pet(pet: Pet) None
+        +remove_pet(pet_id: str) None
+        +get_pets() list~Pet~
+    }
+
+    class Pet {
+        +str pet_id
+        +str name
+        +str species
+        +float age
+        +str special_instructions
+        +update_profile(name: str, species: str, age: float, special_instructions: str) None
+        +get_details() dict
+    }
+
+    class Priority {
+        <<enumeration>>
+        LOW = 1
+        MEDIUM = 2
+        HIGH = 3
+        CRITICAL = 4
+    }
+
+    class Task {
+        +str task_id
+        +str pet_id
+        +str title
+        +int duration
+        +Priority priority
+        +str scheduled_time
+        +bool is_completed
+        +bool is_recurring
+        +mark_complete() None
+        +update_task_details(duration: int, priority: Priority) None
+    }
+
+    class Scheduler {
+        +list~Task~ tasks
+        +add_task(task: Task) None
+        +generate_daily_plan(owner: Owner, time_limit_minutes: int) dict
+        +sort_tasks_by_priority() list~Task~
+        +detect_conflicts() list~tuple~
+    }
+
+    Owner "1" *-- "0..*" Pet : owns
+    Pet "1" *-- "0..*" Task : assigned to
+    Task "1" --> "1" Priority : has
+    Scheduler "1" o-- "0..*" Task : manages
+    Scheduler ..> Owner : plans for
