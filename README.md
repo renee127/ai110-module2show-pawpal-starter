@@ -47,28 +47,46 @@ pip install -r requirements.txt
 Running `python3 main.py` demonstrates priority-based budgeting, overlap detection, and the next available-slot algorithm:
 
 ```text
-🐾 PawPal+ Smart Pet Care Management System — CLI Demo
+=================================================================
+ 🐾 PawPal+ Smart Pet Care Management System — CLI Demo
+=================================================================
 
-⚠️ CONFLICT for Mochi: 'Morning Medication' (08:00 AM) overlaps with 'Morning Walk' (08:00 AM)
+👤 Owner Created: Tyler (tyler@example.com)
+🐾 Pets Added: Rocky (Dog), Kitkat (Cat)
+📋 Care Tasks Created: 4 total tasks across all pets.
 
+-----------------------------------------------------------------
+🔍 Algorithmic Feature 1: Conflict Detection
+-----------------------------------------------------------------
+⚠️ CONFLICT for Rocky: 'Morning Medication' (08:00 AM) overlaps with 'Morning Walk' (08:00 AM)
+
+-----------------------------------------------------------------
 🕒 Advanced Scheduling: Next Available Slot
-   • Next conflict-free 20-minute slot for Mochi: 8:30 AM
+-----------------------------------------------------------------
+   • Next conflict-free 20-minute slot for Rocky: 8:30 AM
 
+-----------------------------------------------------------------
 📅 Algorithmic Feature 2: Daily Plan Generation (Budget: 45 mins)
+-----------------------------------------------------------------
+
 ✅ Scheduled Tasks (40 mins used / 5 mins remaining):
-   • [08:00 AM] Morning Medication for Mochi (10 mins) [Priority: CRITICAL]
-   • [08:00 AM] Morning Walk for Mochi (30 mins) [Priority: HIGH]
+   • [08:00 AM] Morning Medication for Rocky (10 mins) [Priority: CRITICAL]
+   • [08:00 AM] Morning Walk for Rocky (30 mins) [Priority: HIGH]
 
 ⏭️ Skipped Tasks (2):
    • Breakfast Feeding (15 mins) — Reason: Insufficient time budget remaining.
    • Grooming Session (45 mins) — Reason: Insufficient time budget remaining.
+
+=================================================================
+ Demo complete! All core classes & algorithms executed successfully.
+=================================================================
 ```
 
 ## 🧪 Testing PawPal+
 
 ```bash
 # Run the full test suite:
-pytest
+python3 -m pytest test_pawpal_system.py
 
 # Run with coverage:
 pytest --cov
@@ -77,19 +95,31 @@ pytest --cov
 Sample test output:
 
 ```
-# Paste your pytest output here
+============================= test session starts ==============================
+platform darwin -- Python 3.13.14, pytest-9.2.0, pluggy-1.7.0
+rootdir: /Users/temp/Desktop/gits/ai110-module2show-pawpal-starter
+collected 11 items
+
+test_pawpal_system.py ...........                                        [100%]
+
+============================== 11 passed in 0.02s ==============================
+
 ```
 
 ## 📐 Smarter Scheduling
 
 > Fill in once you've implemented scheduling logic.
 
+```markdown
+## 📐 Smarter Scheduling
+
 | Feature | Method(s) | Notes |
-|---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| :--- | :--- | :--- |
+| **Task Sorting** | `Scheduler.sort_tasks_by_priority()` | Primary sorting by numerical `Priority` (`CRITICAL` > `LOW`) and secondary chronological sorting. |
+| **Time Budgeting** | `Scheduler.generate_daily_plan()` | Greedy allocation fitting tasks into available daily minute limit with explicit skip reasons. |
+| **Conflict Detection** | `Scheduler.detect_conflicts()` | Checks interval overlaps ($max(start_1, start_2) < min(end_1, end_2)$) between tasks assigned to the same pet. |
+| **Gap Finder** | `Scheduler.find_next_available_slot()` | Scans existing pet schedules and locates the earliest non-overlapping open time slot. |
+```
 
 ## 📸 Demo Walkthrough
 

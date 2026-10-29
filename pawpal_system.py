@@ -5,6 +5,9 @@ from enum import IntEnum
 from typing import Any
 
 
+FULL_DAY_MINUTES = 12 * 60
+
+
 class Priority(IntEnum):
     LOW = 1
     MEDIUM = 2
@@ -125,7 +128,7 @@ def _minutes_to_time(minutes: int) -> str:
     hour, minute = divmod(minutes, 60)
     period = "PM" if hour >= 12 else "AM"
     display_hour = hour % 12 or 12
-    return f"{display_hour}:{minute:02d} {period}"
+    return f"{display_hour:02d}:{minute:02d} {period}"
 
 
 class Scheduler:
@@ -184,7 +187,12 @@ class Scheduler:
             start = _time_to_minutes(task.scheduled_time)
             if start >= 24 * 60 or task.duration <= 0:
                 continue
-            occupied.append((start, start + task.duration))
+            task_end = (
+                closing_time
+                if task.duration >= FULL_DAY_MINUTES
+                else min(start + task.duration, closing_time)
+            )
+            occupied.append((start, task_end))
 
         for start, end in sorted(occupied):
             if end <= candidate:
