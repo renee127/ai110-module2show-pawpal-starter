@@ -94,6 +94,29 @@ with tab2:
                 st.rerun()
 
     st.header("Daily Schedule Generation")
+
+    st.subheader("Find the Next Available Slot")
+    slot_col1, slot_col2, slot_col3 = st.columns(3)
+    slot_pet_names = {pet.name: pet.pet_id for pet in st.session_state.owner.get_pets()}
+    with slot_col1:
+        slot_pet_name = st.selectbox("Pet", options=list(slot_pet_names.keys()), key="slot_pet") if slot_pet_names else None
+    with slot_col2:
+        desired_start = st.text_input("Desired start", value="08:00 AM", key="slot_start")
+    with slot_col3:
+        slot_duration = st.number_input("Task duration (minutes)", min_value=1, value=30, key="slot_duration")
+
+    if slot_pet_name and st.button("Find Available Slot"):
+        next_slot = st.session_state.scheduler.find_next_available_slot(
+            st.session_state.owner.get_all_tasks(),
+            pet_id=slot_pet_names[slot_pet_name],
+            desired_start=desired_start,
+            duration=int(slot_duration),
+        )
+        if next_slot:
+            st.success(f"Next available slot for {slot_pet_name}: **{next_slot}**")
+        else:
+            st.warning("No available slot was found before 10:00 PM.")
+
     time_budget = st.slider("How much time do you have today? (minutes)", min_value=15, max_value=300, value=120, step=15)
 
     if st.button("Generate Daily Plan", type="primary"):
@@ -101,6 +124,15 @@ with tab2:
             st.session_state.owner, time_limit_minutes=time_budget
         )
         
+        # 1. Conflict Detection
+        all_tasks = st.session_state.owner.get_all_tasks()
+        conflicts = st.session_state.scheduler.detect_conflicts(all_tasks)
+        if conflicts:
+            st.warning("⚠️ Scheduling Conflict Detected!")
+            for t1, t2 in conflicts:
+                st.write(f"• **'{t1.title}'** at {t1.scheduled_time} overlaps with **'{t2.title}'** at {t2.scheduled_time}")
+
+        # 2. Scheduled Tasks
         st.subheader(f"Scheduled Tasks ({time_budget - plan.remaining_minutes} mins used)")
         if not plan.scheduled:
             st.info("No tasks fit the schedule.")
@@ -108,3 +140,12 @@ with tab2:
             for task in plan.scheduled:
                 pet_name = next(p.name for p in st.session_state.owner.get_pets() if p.pet_id == task.pet_id)
                 st.success(f"✅ **{task.scheduled_time}** — {task.title} for {pet_name} ({task.duration} mins) [Priority: {task.priority.name}]")
+
+        # 3. Skipped Tasks
+        st.subheader(f"Skipped Tasks ({len(plan.skipped)})")
+        if not plan.skipped:
+            st.write("All tasks scheduled! No tasks skipped.")
+        else:
+            for task in plan.skipped:
+                reason = plan.skip_reasons.get(task.task_id, "Unknown reason")
+                st.warning(f"⏭️ {task.title} ({task.duration} mins) — **Reason:** {reason}")

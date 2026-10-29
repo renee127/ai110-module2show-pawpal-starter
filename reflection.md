@@ -93,6 +93,7 @@ For the initial architecture of PawPal+, I designed four core classes to separat
 
 **b. What you would improve**
 
+- If I had another iteration, I would add the ability to switch users because the UI tracks a single Owner instance per session in st.session_state rather than providing multi-account authentication or account-switching controls.
 - If I had another iteration, I would implement a full visual calendar view in the Streamlit UI (like a Gantt chart) rather than a simple text-based list, and add drag-and-drop reordering for tasks.
 
 **c. Key takeaway**

@@ -21,7 +21,7 @@ class Task:
     priority: Priority = Priority.MEDIUM
     scheduled_time: str = ""
     is_completed: bool = False
-    recurrence: str = "none"
+    is_recurring: bool = False
 
     def mark_complete(self) -> None:
         self.is_completed = True
@@ -93,6 +93,7 @@ class Plan:
         self.remaining_minutes: int = 0
         self.skip_reasons: dict[str, str] = {}
 
+
 def _time_to_minutes(time_value: str) -> int:
     value = time_value.strip().upper()
     if not value:
@@ -101,7 +102,11 @@ def _time_to_minutes(time_value: str) -> int:
     try:
         if " " in value:
             clock, meridiem = value.rsplit(" ", 1)
+            if meridiem not in {"AM", "PM"}:
+                return 24 * 60
             hour, minute = (int(part) for part in clock.split(":"))
+            if minute not in range(60) or hour not in range(1, 13):
+                return 24 * 60
             if meridiem == "PM" and hour != 12:
                 hour += 12
             elif meridiem == "AM" and hour == 12:
@@ -109,9 +114,18 @@ def _time_to_minutes(time_value: str) -> int:
             return hour * 60 + minute
 
         hour, minute = (int(part) for part in value.split(":"))
+        if minute not in range(60) or hour not in range(24):
+            return 24 * 60
         return hour * 60 + minute
     except (TypeError, ValueError):
         return 24 * 60
+
+
+def _minutes_to_time(minutes: int) -> str:
+    hour, minute = divmod(minutes, 60)
+    period = "PM" if hour >= 12 else "AM"
+    display_hour = hour % 12 or 12
+    return f"{display_hour}:{minute:02d} {period}"
 
 
 class Scheduler:
@@ -119,7 +133,7 @@ class Scheduler:
         self, owner: Owner, time_limit_minutes: int
     ) -> Plan:
         plan = Plan()
-        plan.remaining_minutes = time_limit_minutes
+        plan.remaining_minutes = max(0, time_limit_minutes)
 
         all_tasks = owner.get_all_tasks()
         eligible_tasks = [task for task in all_tasks if not task.is_completed]
@@ -127,7 +141,10 @@ class Scheduler:
         sorted_tasks = self.sort_tasks_by_priority(eligible_tasks)
 
         for task in sorted_tasks:
-            if task.duration <= plan.remaining_minutes:
+            if task.duration <= 0:
+                plan.skipped.append(task)
+                plan.skip_reasons[task.task_id] = "Task duration must be greater than zero."
+            elif task.duration <= plan.remaining_minutes:
                 plan.scheduled.append(task)
                 plan.remaining_minutes -= task.duration
             else:
@@ -139,8 +156,47 @@ class Scheduler:
     def sort_tasks_by_priority(self, tasks: list[Task]) -> list[Task]:
         return sorted(
             tasks,
-            key=lambda task: (-task.priority, _time_to_minutes(task.scheduled_time)),
+            key=lambda task: (
+                -task.priority,
+                _time_to_minutes(task.scheduled_time),
+                task.task_id,
+            ),
         )
+
+    def find_next_available_slot(
+        self,
+        tasks: list[Task],
+        pet_id: str,
+        desired_start: str,
+        duration: int,
+        day_end: str = "10:00 PM",
+    ) -> str | None:
+        """Find the first non-overlapping slot for one pet on the same day."""
+        candidate = _time_to_minutes(desired_start)
+        closing_time = _time_to_minutes(day_end)
+        if duration <= 0 or candidate >= 24 * 60 or closing_time >= 24 * 60:
+            return None
+
+        occupied: list[tuple[int, int]] = []
+        for task in tasks:
+            if task.pet_id != pet_id or task.is_completed or not task.scheduled_time.strip():
+                continue
+            start = _time_to_minutes(task.scheduled_time)
+            if start >= 24 * 60 or task.duration <= 0:
+                continue
+            occupied.append((start, start + task.duration))
+
+        for start, end in sorted(occupied):
+            if end <= candidate:
+                continue
+            if candidate + duration <= start:
+                break
+            if candidate < end:
+                candidate = max(candidate, end)
+
+        if candidate + duration > closing_time:
+            return None
+        return _minutes_to_time(candidate)
 
     def detect_conflicts(self, tasks: list[Task]) -> list[tuple[Task, Task]]:
         conflicts = []
@@ -153,7 +209,7 @@ class Scheduler:
             first_end = first_start + first.duration
 
             for second in tasks[index + 1:]:
-                # Only check for conflicts if tasks belong to the same pet
+                # Conflicts only apply if tasks belong to the same pet
                 if first.pet_id != second.pet_id:
                     continue
                 if not second.scheduled_time.strip():
@@ -162,7 +218,9 @@ class Scheduler:
                 if second_start >= 24 * 60:
                     continue
                 second_end = second_start + second.duration
-                if first_start < second_end and second_start < first_end:
+
+                # Overlap logic: max(start1, start2) < min(end1, end2)
+                if max(first_start, second_start) < min(first_end, second_end):
                     conflicts.append((first, second))
 
         return conflicts

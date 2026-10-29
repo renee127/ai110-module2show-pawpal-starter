@@ -1,15 +1,17 @@
+"""Automated unit test suite for PawPal+ core domain and scheduling logic."""
+
 from pawpal_system import Owner, Pet, Priority, Scheduler, Task
 
 
 def create_owner_with_task(task: Task) -> Owner:
-    pet = Pet("pet-1", "Mochi", "dog", 3.0)
+    pet = Pet("pet-1", "Rocky", "dog", 3.0)
     pet.add_task(task)
-    return Owner("owner-1", "Jordan", "jordan@example.com", [pet])
+    return Owner("owner-1", "Tyler", "tyler@example.com", [pet])
 
 
 def test_owner_manages_pets():
-    owner = Owner("owner-1", "Jordan", "jordan@example.com")
-    pet = Pet("pet-1", "Mochi", "dog", 3.0)
+    owner = Owner("owner-1", "Tyler", "tyler@example.com")
+    pet = Pet("pet-1", "Rocky", "dog", 3.0)
 
     owner.add_pet(pet)
 
@@ -19,11 +21,11 @@ def test_owner_manages_pets():
 
 
 def test_pet_profile_and_task_helpers():
-    pet = Pet("pet-1", "Mochi", "dog", 3.0)
+    pet = Pet("pet-1", "Rocky", "dog", 3.0)
     task = Task("task-1", "pet-1", "Morning walk")
 
     pet.add_task(task)
-    pet.update_profile("Mochi", "Golden Retriever", 4.0, "Take water")
+    pet.update_profile("Rocky", "Golden Retriever", 4.0, "Take water")
 
     assert pet.tasks == [task]
     assert pet.get_details()["age"] == 4.0
@@ -83,3 +85,49 @@ def test_scheduler_detects_overlapping_tasks_for_same_pet():
     conflicts = Scheduler().detect_conflicts([first, second, separate_pet])
 
     assert conflicts == [(first, second)]
+
+
+# --- ADVANCED SCHEDULING & ALGORITHMIC FEATURE TESTS ---
+
+def test_find_next_available_slot_identifies_middle_gap():
+    """Verifies that find_next_available_slot locates an open window between two scheduled tasks."""
+    t1 = Task("t1", "p1", "Morning Feed", duration=30, priority=Priority.HIGH, scheduled_time="08:00 AM")
+    t2 = Task("t2", "p1", "Playtime", duration=30, priority=Priority.MEDIUM, scheduled_time="09:00 AM")
+    scheduler = Scheduler()
+
+    slot = scheduler.find_next_available_slot(
+        [t1, t2], pet_id="p1", desired_start="08:00 AM", duration=20
+    )
+    assert slot == "08:30 AM"
+
+
+def test_find_next_available_slot_returns_none_when_no_gap_fits():
+    """Verifies boundary handling when schedule is full and no valid slot exists."""
+    t1 = Task("t1", "p1", "All Day Activity", duration=720, priority=Priority.HIGH, scheduled_time="08:00 AM")
+    scheduler = Scheduler()
+
+    slot = scheduler.find_next_available_slot(
+        [t1], pet_id="p1", desired_start="08:00 AM", duration=60
+    )
+    assert slot is None
+
+
+def test_conflict_detection_isolates_by_pet():
+    """Ensures overlapping task times for DIFFERENT pets do NOT trigger a false positive conflict."""
+    p1_task = Task("t1", "p1", "Walk Dog", duration=30, priority=Priority.HIGH, scheduled_time="08:00 AM")
+    p2_task = Task("t2", "p2", "Feed Cat", duration=30, priority=Priority.HIGH, scheduled_time="08:00 AM")
+    scheduler = Scheduler()
+
+    conflicts = scheduler.detect_conflicts([p1_task, p2_task])
+    assert conflicts == []
+
+
+def test_complex_scheduling_priority_and_time_tiebreak():
+    """Verifies primary sorting by priority level and secondary sorting by chronological time."""
+    t1 = Task("t1", "p1", "Late High Priority", duration=15, priority=Priority.HIGH, scheduled_time="10:00 AM")
+    t2 = Task("t2", "p1", "Early High Priority", duration=15, priority=Priority.HIGH, scheduled_time="08:00 AM")
+    t3 = Task("t3", "p1", "Critical Task", duration=15, priority=Priority.CRITICAL, scheduled_time="09:00 AM")
+    scheduler = Scheduler()
+
+    sorted_tasks = scheduler.sort_tasks_by_priority([t1, t2, t3])
+    assert [t.task_id for t in sorted_tasks] == ["t3", "t2", "t1"]

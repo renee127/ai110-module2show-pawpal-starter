@@ -42,16 +42,26 @@ pip install -r requirements.txt
 6. Connect your logic to the Streamlit UI in `app.py`.
 7. Refine UML so it matches what you actually built.
 
-## 🖥️ Sample Output
+## 🖥️ CLI Output
 
-Paste a sample of your app's CLI or Streamlit output here so a reader can see what a generated plan looks like:
+Running `python3 main.py` demonstrates priority-based budgeting, overlap detection, and the next available-slot algorithm:
 
-```
-# e.g.:
-# Daily plan for Biscuit (Golden Retriever):
-#   08:00 — Morning walk (30 min) [priority: high]
-#   09:00 — Feeding (10 min) [priority: high]
-#   ...
+```text
+🐾 PawPal+ Smart Pet Care Management System — CLI Demo
+
+⚠️ CONFLICT for Mochi: 'Morning Medication' (08:00 AM) overlaps with 'Morning Walk' (08:00 AM)
+
+🕒 Advanced Scheduling: Next Available Slot
+   • Next conflict-free 20-minute slot for Mochi: 8:30 AM
+
+📅 Algorithmic Feature 2: Daily Plan Generation (Budget: 45 mins)
+✅ Scheduled Tasks (40 mins used / 5 mins remaining):
+   • [08:00 AM] Morning Medication for Mochi (10 mins) [Priority: CRITICAL]
+   • [08:00 AM] Morning Walk for Mochi (30 mins) [Priority: HIGH]
+
+⏭️ Skipped Tasks (2):
+   • Breakfast Feeding (15 mins) — Reason: Insufficient time budget remaining.
+   • Grooming Session (45 mins) — Reason: Insufficient time budget remaining.
 ```
 
 ## 🧪 Testing PawPal+
