@@ -110,8 +110,7 @@ test_pawpal_system.py ...........                                        [100%]
 
 > Fill in once you've implemented scheduling logic.
 
-```markdown
-## 📐 Smarter Scheduling
+```## 📐 Smarter Scheduling
 
 | Feature | Method(s) | Notes |
 | :--- | :--- | :--- |
