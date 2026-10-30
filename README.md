@@ -125,7 +125,7 @@ test_pawpal_system.py ...........                                        [100%]
 
 Describe your app in numbered steps so a reader can follow along without watching a video:
 
-1. <!-- Describe this step -->
+1. <!-- Owner Profile & Pet Setup: Launch the app (streamlit run app.py) and navigate to the Profile & Pets tab. View the default owner profile ("Jordan") and register a second pet (e.g., "Kitkat", Cat, age 2) using the Add a New Pet form.Describe this step -->
 2. <!-- Describe this step -->
 3. <!-- Describe this step -->
 4. <!-- Describe this step -->
