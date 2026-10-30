@@ -125,10 +125,10 @@ test_pawpal_system.py ...........                                        [100%]
 
 Describe your app in numbered steps so a reader can follow along without watching a video:
 
-1. <!-- Owner Profile & Pet Setup: Launch the app (streamlit run app.py) and navigate to the Profile & Pets tab. View the default owner profile ("Jordan") and register a second pet (e.g., "Kitkat", Cat, age 2) using the Add a New Pet form.Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+1. Owner Profile & Pet Setup: Launch the app (streamlit run app.py) and navigate to the Profile & Pets tab. View the default owner profile ("Jordan") and register a second pet (e.g., "Kitkat", Cat, age 2) using the Add a New Pet form.
+2. Task Creation with Priorities: Expand the sidebar form to add care tasks across your pets. Create a Critical priority "Morning Medication" (10 mins, 08:00 AM) and a High priority "Morning Walk" (30 mins, 08:00 AM) for the same pet to set up an intentional time conflict
+3. Next Available Slot Scan: On the Schedule & Tasks tab, select a pet, set a desired start time of 08:00 AM for a 20-minute task, and click Find Available Slot. Observe the system suggest 08:30 AM, automatically finding the first non-overlapping gap after the scheduled morning routine.
+4. Conflict Detection Display: Adjust the daily available time budget slider to 45 minutes and click Generate Daily Plan. Notice the prominent warning banner (⚠️ Scheduling Conflict Detected!) flagging that "Morning Medication" and "Morning Walk" overlap at 08:00 AM.
+5. Prioritized Agenda & Skip Explanations: Review the generated daily agenda. Confirm that the highest priority tasks (CRITICAL and HIGH) are allocated within the 45-minute budget, while lower-priority or excess tasks appear in the Skipped Tasks section with explicit reason labels ("Insufficient time budget remaining").
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
