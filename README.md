@@ -131,4 +131,4 @@ Describe your app in numbered steps so a reader can follow along without watchin
 4. Conflict Detection Display: Adjust the daily available time budget slider to 45 minutes and click Generate Daily Plan. Notice the prominent warning banner (⚠️ Scheduling Conflict Detected!) flagging that "Morning Medication" and "Morning Walk" overlap at 08:00 AM.
 5. Prioritized Agenda & Skip Explanations: Review the generated daily agenda. Confirm that the highest priority tasks (CRITICAL and HIGH) are allocated within the 45-minute budget, while lower-priority or excess tasks appear in the Skipped Tasks section with explicit reason labels ("Insufficient time budget remaining").
 
-**Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+**Screenshot or video** *(optional)*: <img width="2560" height="1600" alt="pawpalmovie" src="https://github.com/user-attachments/assets/85111039-651a-4813-b683-336fd1ab679b" />
